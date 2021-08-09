@@ -1,4 +1,3 @@
-
 name := "web_serv_api_core"
 
 ThisBuild / organization := "yakushev"
@@ -56,21 +55,18 @@ lazy val dependencies =
   val elastic4sClient = "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % elastic4sV
   val elastic4sHttp   = "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sHttpV
 
-  val elastic4s = List(elastic4sClient/*, elastic4sHttp*/)
+  val elastic4s = List(elastic4sClient, elastic4sHttp)
   val akka = List(akkaHttp, akkaActor, akkaStream, akkaActorTyped, akkaSlf4j)
   val circe = List(circeCore, circeGeneric, circeParser, circeLiteral)
 
   }
 
 val commonDependencies = {
-  //List(dependencies.logback) ++
-  dependencies.elastic4s //++
-  //dependencies.akka ++
-  //dependencies.circe
+  List(dependencies.logback) ++
+  dependencies.elastic4s ++
+  dependencies.akka ++
+  dependencies.circe
 }
-
-// SETTINGS
-//addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
 lazy val compilerOptions = Seq(
         "-Ymacro-annotations",
@@ -92,13 +88,7 @@ lazy val commonSettings = Seq(
     Resolver.sonatypeRepo("releases"),
     "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
       Resolver.mavenLocal,
-      Resolver.sonatypeRepo("public")/*,
-      Resolver.typesafeRepo("releases"),
-      Resolver.typesafeIvyRepo("releases"),
-      Resolver.sbtPluginRepo("releases"),
-      Resolver.sonatypeRepo("releases"),
-      Resolver.bintrayRepo("websudos", "oss-releases")
-    */
+      Resolver.sonatypeRepo("public")
   )
 )
 
@@ -106,34 +96,12 @@ api / assembly / assemblyMergeStrategy := {
   case PathList("module-info.class") => MergeStrategy.discard
   case x if x.endsWith("/module-info.class") => MergeStrategy.discard
   case PathList("META-INF", xs @ _*)         => MergeStrategy.discard
-  case x =>
-    val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
-    oldStrategy(x)
+  case _ => MergeStrategy.first
 }
 
 core / assembly / assemblyMergeStrategy := {
   case PathList("module-info.class") => MergeStrategy.discard
   case x if x.endsWith("/module-info.class") => MergeStrategy.discard
   case PathList("META-INF", xs @ _*)         => MergeStrategy.discard
-  case x =>
-    val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
-    oldStrategy(x)
+  case _ => MergeStrategy.first
 }
-
-/*
-api / assembly / assemblyMergeStrategy := {
-  case "application.conf"                            => MergeStrategy.concat
-  case PathList("META-INF", xs @ _*)                 => MergeStrategy.discard
-  case x =>
-    val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
-    oldStrategy(x)
-}
-
-core / assembly / assemblyMergeStrategy := {
-  case "application.conf"                            => MergeStrategy.concat
-  case PathList("META-INF", xs @ _*)                 => MergeStrategy.discard
-  case x =>
-    val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
-    oldStrategy(x)
-}
-*/
