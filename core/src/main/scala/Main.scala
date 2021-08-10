@@ -1,3 +1,5 @@
+import webservice.WSEndPoints
+
 object Main extends App {
-  println("core")
+  val service = WSEndPoints.startService
 }
