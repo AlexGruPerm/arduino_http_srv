@@ -46,7 +46,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
  *
 */
 object WSEndPoints {
-  val log: Logger = LoggerFactory.getLogger(getClass.getName)
+  private val log: Logger = LoggerFactory.getLogger(getClass.getName)
   log.info("Service is starting ..........................")
   val (host,port) = ("127.0.0.1",8080)
   implicit val system: ActorSystem = ActorSystem("core")
@@ -54,7 +54,7 @@ object WSEndPoints {
   implicit val timeout: Timeout = Timeout(120 seconds)
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
   import akka.stream.scaladsl.Source
-  val serviceSource: Source[Http.IncomingConnection, Future[ServerBinding]] = Http(system).newServerAt(host,port)
+  private val serviceSource: Source[Http.IncomingConnection, Future[ServerBinding]] = Http(system).newServerAt(host,port)
     .connectionSource()
 
   private def reqHandler(request: HttpRequest): Future[HttpResponse] = {

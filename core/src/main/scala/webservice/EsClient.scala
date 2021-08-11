@@ -9,32 +9,37 @@ import com.sksamuel.elastic4s.requests.update.UpdateResponse
 import com.sksamuel.elastic4s.requests.delete.DeleteResponse
 import org.slf4j.{Logger, LoggerFactory}
 
+import java.util.concurrent.Executors
+import scala.concurrent.{ExecutionContext, Future}
+
+
 class EsClient(val elasticAddress: String, val serviceAddress: String, val elasticIndexName: String) {
+  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
   private val client = ElasticClient(JavaClient(ElasticProperties(elasticAddress)))
   private val indexName: String = elasticIndexName
   import com.sksamuel.elastic4s.ElasticDsl._
-  val log: Logger = LoggerFactory.getLogger(getClass.getName)
+  private val log: Logger = LoggerFactory.getLogger(getClass.getName)
 
-  private def saveUser(userFio: String): Response[IndexResponse] = client.execute {
-      indexInto(indexName).fields( "user_fio" -> userFio).refresh(RefreshPolicy.Immediate)
-    }.await
+  private def saveUser(userFio: String): Future[Response[IndexResponse]] = client.execute {
+      indexInto(indexName).fields( "user_fio" -> userFio).refreshImmediately
+    }
 
-  private def searchUserById(searchId: String): Response[SearchResponse] = client.execute {
+  private def searchUserById(searchId: String): Future[Response[SearchResponse]] = client.execute {
     search(indexName).query(idsQuery(searchId))
-  }.await
+  }
 
-  private def refreshUser(id: String, userFio: String): Response[UpdateResponse] = client.execute {
+  private def refreshUser(id: String, userFio: String): Future[Response[UpdateResponse]] = client.execute {
       updateById(elasticIndexName,id).doc(s"{\"user_fio\" : \"$userFio\" }").refreshImmediately
-    }.await
+    }
 
-  private def deleteUserById(deleteId: String): Response[DeleteResponse] = client.execute {
-    deleteById(indexName,deleteId)
-  }.await
+  private def deleteUserById(deleteId: String): Future[Response[DeleteResponse]] = client.execute {
+    deleteById(indexName,deleteId).refreshImmediately
+  }
 
   /**
-   * Return None if error raised or http link with created user ID
+   * Return Future: None if error raised or http link with created user ID
   */
-  def insertUser(user_fio: String): Option[String] = saveUser(user_fio) match {
+  def insertUser(user_fio: String): Future[Option[String]] = saveUser(user_fio).map{
     case failure: RequestFailure =>
       log.error(s"insertUser error = ${failure.error.toString}")
       None
@@ -43,27 +48,27 @@ class EsClient(val elasticAddress: String, val serviceAddress: String, val elast
   }
 
   /**
-   * Return None if not found else Some(user_fio)
+   * Return Future: None if not found else Some(user_fio)
   */
-  def searchUser(id: String): Option[String] = searchUserById(id) match {
+  def searchUser(id: String): Future[Option[String]] = searchUserById(id).map{
     case failure: RequestFailure => {
       log.error(s"searchUser error = ${failure.error}")
       None
     }
     case results: RequestSuccess[SearchResponse] => {
       results.result.hits.hits.toList.headOption match {
-        case Some(s) => Some[String](s.sourceField("user_fio").toString)
+        case Some(s) => Some(s.sourceField("user_fio").toString)
         case _ => None
       }
     }
   }
 
   /**
-   * Return None if not found else Some("200") as OK Status
+   * Return Future: None if not found else Some("200") as OK Status
    */
-  def updateUser(id: String, user_fio: String): Option[String] = refreshUser(id, user_fio) match {
+  def updateUser(id: String, user_fio: String): Future[Option[String]] = refreshUser(id, user_fio).map{
     case failure: RequestFailure =>
-      log.error(s"insertUser error = ${failure.error.toString}")
+      log.error(s"insertUser error = ${failure.error}")
       None
     case results: RequestSuccess[UpdateResponse] =>
       log.info(s"Update status = ${results.status}")
@@ -71,16 +76,16 @@ class EsClient(val elasticAddress: String, val serviceAddress: String, val elast
   }
 
   /**
-   * Return None or Some(id of deleted user)
+   * Return Future: None or Some(id of deleted user)
   */
-  def deleteUser(id: String): Option[String] = deleteUserById(id) match {
+  def deleteUser(id: String): Future[Option[String]] = deleteUserById(id).map{
     case failure: RequestFailure => {
       log.error(s"searchUser error = ${failure.error}")
       None
     }
     case results: Response[DeleteResponse] =>
       results.result.result match {
-        case "deleted" => Some[String](results.result.id)
+        case "deleted" => Some(results.result.id)
         case _ => None
       }
   }
