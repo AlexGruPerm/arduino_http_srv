@@ -65,6 +65,24 @@ object WSRoutes {
     Future.successful(httpResponse)
   }
 
+  def routeUpdate(queryPair: Option[(String,String)], reqEntity: Future[String]): Future[HttpResponse] = {
+    val httpResponse: Future[HttpResponse] = queryPair match {
+      case Some((_, updateId)) =>
+        parseCreateUserData(reqEntity).map{
+          case UserFio(newfio) => esClient.updateUser(updateId, newfio)
+          match {
+            case Some(saveResult) => HttpResponse(status = StatusCodes.Created, headers = Seq(RawHeader("Location", saveResult)))
+            case _ => HttpResponse(StatusCodes.NotFound)
+          }
+          case _ => HttpResponse(StatusCodes.NotFound)
+        }
+      case _ => Future(HttpResponse(StatusCodes.NotFound))
+    }
+
+    val insertHttpResult: HttpResponse = Await.result(httpResponse, 1 second)
+    Future.successful(insertHttpResult)
+  }
+
 
   def routeDelete(queryPair: Option[(String,String)]): Future[HttpResponse] = {
     val httpResponse = queryPair match {

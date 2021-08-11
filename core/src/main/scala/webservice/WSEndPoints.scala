@@ -31,11 +31,14 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
  * "fio" : "Sidorov"}
  *  OR 404 (NotFound)
  *
+ *  3) Update
+ *  PUT http://127.0.0.1:8080/user?id=2
+ *  with body {"user_fio":"NewFio"}
+ *  Return:
+ *  201 (Created)
+ *  OR 404 (NotFound)
  *
- * 3) Update
- *
- *
- * 4) Delete
+ *  4) Delete
  *  DELETE http://127.0.0.1:8080/user?id=3
  *  Return:
  *  200 (OK)
@@ -60,10 +63,10 @@ object WSEndPoints {
         routeCreate(Unmarshal(request.entity).to[String])
       case request@HttpRequest(HttpMethods.GET, Uri.Path("/user"), _, _, _) =>
         routeGet(request.uri.query().toList.headOption)
-
       case request@HttpRequest(HttpMethods.DELETE, Uri.Path("/user"), _, _, _) =>
         routeDelete(request.uri.query().toList.headOption)
-
+      case request@HttpRequest(HttpMethods.PUT, Uri.Path("/user"), _, _, _) =>
+        routeUpdate(request.uri.query().toList.headOption, Unmarshal(request.entity).to[String])
       case _ @ HttpRequest(_, Uri.Path("/favicon.ico"), _, _, _) => routeGetFavicon
     }
   }

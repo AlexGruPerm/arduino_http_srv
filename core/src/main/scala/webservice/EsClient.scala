@@ -5,6 +5,7 @@ import com.sksamuel.elastic4s.http.JavaClient
 import com.sksamuel.elastic4s.requests.common.RefreshPolicy
 import com.sksamuel.elastic4s.requests.indexes.IndexResponse
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
+import com.sksamuel.elastic4s.requests.update.UpdateResponse
 import com.sksamuel.elastic4s.requests.delete.DeleteResponse
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -14,16 +15,19 @@ class EsClient(val elasticAddress: String, val serviceAddress: String, val elast
   import com.sksamuel.elastic4s.ElasticDsl._
   val log: Logger = LoggerFactory.getLogger(getClass.getName)
 
-  private def saveUser(userFio: String) :Response[IndexResponse] =
-    client.execute {
+  private def saveUser(userFio: String): Response[IndexResponse] = client.execute {
       indexInto(indexName).fields( "user_fio" -> userFio).refresh(RefreshPolicy.Immediate)
     }.await
 
-  private def searchUserById(searchId: String) :Response[SearchResponse] = client.execute {
+  private def searchUserById(searchId: String): Response[SearchResponse] = client.execute {
     search(indexName).query(idsQuery(searchId))
   }.await
 
-  private def deleteUserById(deleteId: String) :Response[DeleteResponse] = client.execute {
+  private def refreshUser(id: String, userFio: String): Response[UpdateResponse] = client.execute {
+      updateById(elasticIndexName,id).doc(s"{\"user_fio\" : \"$userFio\" }").refreshImmediately
+    }.await
+
+  private def deleteUserById(deleteId: String): Response[DeleteResponse] = client.execute {
     deleteById(indexName,deleteId)
   }.await
 
@@ -52,6 +56,18 @@ class EsClient(val elasticAddress: String, val serviceAddress: String, val elast
         case _ => None
       }
     }
+  }
+
+  /**
+   * Return None if not found else Some("200") as OK Status
+   */
+  def updateUser(id: String, user_fio: String): Option[String] = refreshUser(id, user_fio) match {
+    case failure: RequestFailure =>
+      log.error(s"insertUser error = ${failure.error.toString}")
+      None
+    case results: RequestSuccess[UpdateResponse] =>
+      log.info(s"Update status = ${results.status}")
+      Some(results.status.toString)
   }
 
   /**
