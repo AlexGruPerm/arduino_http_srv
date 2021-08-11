@@ -20,23 +20,26 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
  *  POST  http://localhost:8080/user
  *  with body {"user_fio":"Sidorchuk"}
  *  Return:
- *  201(Created) and 'Location' in header like this: http://127.0.0.1:8080/user?id=Ov3zMXsBX9B3-hGXP6j3
- *  OR return 404 (NotFound) without 409 (Conflict)!
+ *  201 (Created) and 'Location' in header like this: http://127.0.0.1:8080/user?id=Ov3zMXsBX9B3-hGXP6j3
+ *  OR 404 (NotFound) without 409 (Conflict)!
  *
  *  2) Read
  *  GET http://127.0.0.1:8080/user?id=3
  *  Return:
- *  200(OK) and response json
+ *  200 (OK) and response json
  *  {"id" : "3",
  * "fio" : "Sidorov"}
- *  OR return 404 (NotFound)
+ *  OR 404 (NotFound)
  *
  *
  * 3) Update
  *
  *
  * 4) Delete
- *
+ *  DELETE http://127.0.0.1:8080/user?id=3
+ *  Return:
+ *  200 (OK)
+ *  OR 404 (NotFound)
  *
 */
 object WSEndPoints {
@@ -57,6 +60,10 @@ object WSEndPoints {
         routeCreate(Unmarshal(request.entity).to[String])
       case request@HttpRequest(HttpMethods.GET, Uri.Path("/user"), _, _, _) =>
         routeGet(request.uri.query().toList.headOption)
+
+      case request@HttpRequest(HttpMethods.DELETE, Uri.Path("/user"), _, _, _) =>
+        routeDelete(request.uri.query().toList.headOption)
+
       case _ @ HttpRequest(_, Uri.Path("/favicon.ico"), _, _, _) => routeGetFavicon
     }
   }

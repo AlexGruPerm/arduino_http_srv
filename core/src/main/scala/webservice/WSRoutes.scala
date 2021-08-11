@@ -65,6 +65,19 @@ object WSRoutes {
     Future.successful(httpResponse)
   }
 
+
+  def routeDelete(queryPair: Option[(String,String)]): Future[HttpResponse] = {
+    val httpResponse = queryPair match {
+      case Some((_, searchId)) =>
+        esClient.deleteUser(searchId) match {
+          case Some(result) => HttpResponse(StatusCodes.OK)
+          case _ => HttpResponse(StatusCodes.NotFound)
+        }
+      case _ => HttpResponse(StatusCodes.NotFound)
+    }
+    Future.successful(httpResponse)
+  }
+
   def routeGetFavicon: Future[HttpResponse] = {
     //todo: fix it and take from resource folder
     val icoFile = new File("F:\\PROJECTS\\ws_ora\\src\\main\\resources\\favicon.png")

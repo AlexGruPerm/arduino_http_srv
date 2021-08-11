@@ -5,6 +5,7 @@ import com.sksamuel.elastic4s.http.JavaClient
 import com.sksamuel.elastic4s.requests.common.RefreshPolicy
 import com.sksamuel.elastic4s.requests.indexes.IndexResponse
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
+import com.sksamuel.elastic4s.requests.delete.DeleteResponse
 import org.slf4j.{Logger, LoggerFactory}
 
 class EsClient(val elasticAddress: String, val serviceAddress: String, val elasticIndexName: String) {
@@ -22,6 +23,13 @@ class EsClient(val elasticAddress: String, val serviceAddress: String, val elast
     search(indexName).query(idsQuery(searchId))
   }.await
 
+  private def deleteUserById(deleteId: String) :Response[DeleteResponse] = client.execute {
+    deleteById(indexName,deleteId)
+  }.await
+
+  /**
+   * Return None if error raised or http link with created user ID
+  */
   def insertUser(user_fio: String): Option[String] = saveUser(user_fio) match {
     case failure: RequestFailure =>
       log.error(s"insertUser error = ${failure.error.toString}")
@@ -30,6 +38,9 @@ class EsClient(val elasticAddress: String, val serviceAddress: String, val elast
       Some(serviceAddress + "/user?id=" + results.result.id)
   }
 
+  /**
+   * Return None if not found else Some(user_fio)
+  */
   def searchUser(id: String): Option[String] = searchUserById(id) match {
     case failure: RequestFailure => {
       log.error(s"searchUser error = ${failure.error}")
@@ -42,5 +53,21 @@ class EsClient(val elasticAddress: String, val serviceAddress: String, val elast
       }
     }
   }
+
+  /**
+   * Return None or Some(id of deleted user)
+  */
+  def deleteUser(id: String): Option[String] = deleteUserById(id) match {
+    case failure: RequestFailure => {
+      log.error(s"searchUser error = ${failure.error}")
+      None
+    }
+    case results: Response[DeleteResponse] =>
+      results.result.result match {
+        case "deleted" => Some[String](results.result.id)
+        case _ => None
+      }
+  }
+
 
 }
