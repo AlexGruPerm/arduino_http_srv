@@ -12,6 +12,10 @@ The goal of this example is to provide a multi-project build using `sbt` providi
 * build only api        :  web_serv_api_core>sbt api/clean api/compile api/assembly 
 * build only core       :  web_serv_api_core>sbt core/clean core/compile core/assembly
 
+# Run
+java -jar core.jar
+
+
 # Example structure
 * sbt-multi-project-example/
     * api/
