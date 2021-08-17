@@ -65,10 +65,10 @@ object WSEndPoints {
         routeCreate(Unmarshal(request.entity).to[String])
       case request@HttpRequest(HttpMethods.GET, Uri.Path("/user"), _, _, _) =>
         routeGet(request.uri.query().toList.headOption)
-      case request@HttpRequest(HttpMethods.DELETE, Uri.Path("/user"), _, _, _) =>
-        routeDelete(request.uri.query().toList.headOption)
       case request@HttpRequest(HttpMethods.PUT, Uri.Path("/user"), _, _, _) =>
         routeUpdate(request.uri.query().toList.headOption, Unmarshal(request.entity).to[String])
+      case request@HttpRequest(HttpMethods.DELETE, Uri.Path("/user"), _, _, _) =>
+        routeDelete(request.uri.query().toList.headOption)
       case _ @ HttpRequest(_, Uri.Path("/favicon.ico"), _, _, _) => routeGetFavicon
     }
   }
