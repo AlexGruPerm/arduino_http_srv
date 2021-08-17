@@ -18,8 +18,4 @@ object Decoders {
     } yield User(userId,userFio)
   }
 
-
-
-
-
 }

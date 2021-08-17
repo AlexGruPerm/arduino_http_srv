@@ -88,7 +88,7 @@ object WSRoutes {
 
   def routeGetFavicon: Future[HttpResponse] = {
     //todo: fix it and take from resource folder
-    val icoFile = new File("F:\\PROJECTS\\ws_ora\\src\\main\\resources\\favicon.png")
+    val icoFile = new File("F:\\PROJECTS\\web_serv_api_core\\core\\src\\main\\resources\\favicon.png")
     Future.successful(
       HttpResponse(StatusCodes.OK, entity =
         HttpEntity(MediaTypes.`application/octet-stream`, icoFile.length, FileIO.fromPath(icoFile.toPath))
