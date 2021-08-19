@@ -59,15 +59,21 @@ object WSEndPoints {
   private val serviceSource: Source[Http.IncomingConnection, Future[ServerBinding]] = Http(system).newServerAt(host,port)
     .connectionSource()
 
+
+
   private def reqHandler(request: HttpRequest): Future[HttpResponse] = {
     request match {
       case request@HttpRequest(HttpMethods.POST, Uri.Path("/user"), _, _, _) =>
+        log.info(s"CREATE request")
         routeCreate(Unmarshal(request.entity).to[String])
       case request@HttpRequest(HttpMethods.GET, Uri.Path("/user"), _, _, _) =>
+        log.info(s"READ request")
         routeGet(request.uri.query().toList.headOption)
       case request@HttpRequest(HttpMethods.PUT, Uri.Path("/user"), _, _, _) =>
+        log.info(s"UPDATE request")
         routeUpdate(request.uri.query().toList.headOption, Unmarshal(request.entity).to[String])
       case request@HttpRequest(HttpMethods.DELETE, Uri.Path("/user"), _, _, _) =>
+        log.info(s"DELETE request")
         routeDelete(request.uri.query().toList.headOption)
       case _ @ HttpRequest(_, Uri.Path("/favicon.ico"), _, _, _) => routeGetFavicon
     }

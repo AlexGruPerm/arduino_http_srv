@@ -72,6 +72,7 @@ class WSEndPoints(coreAddress: String, corePort: Int) {
   private def reqHandler(request: HttpRequest): Future[HttpResponse] = {
     request match {
       case request@HttpRequest(HttpMethods.POST, Uri.Path("/user"), _, _, _) =>
+        log.info(s"CREATE request")
         val uriPost = Uri.from(scheme = "http", host = coreAddress, port = corePort, path = "/user")
         val createResponse: Future[HttpResponse] = Http().singleRequest(HttpRequest(POST, uri = uriPost, entity = request.entity)).map(resp => resp)
         //we need change Location in header from http://127.0.0.1:8080/user?id=xxx to http://127.0.0.1:8081/user?id=xxx
@@ -85,7 +86,8 @@ class WSEndPoints(coreAddress: String, corePort: Int) {
             }},
             resp.entity
           )))
-      case request@HttpRequest(HttpMethods.GET, Uri.Path("/user"), _, entity, _) =>
+      case request@HttpRequest(HttpMethods.GET, Uri.Path("/user"), _, _, _) =>
+        log.info(s"READ request")
         request.uri.query().toList.headOption match {
           case Some(("id", parValue: String)) =>
             val uriGet = Uri.from(scheme = "http", host = coreAddress, port = corePort, path = "/user", queryString = Some("id" + "=" + parValue))
@@ -93,6 +95,7 @@ class WSEndPoints(coreAddress: String, corePort: Int) {
           case _ => Future(HttpResponse(StatusCodes.NotFound))
         }
       case request@HttpRequest(HttpMethods.PUT, Uri.Path("/user"), _, _, _) =>
+        log.info(s"UPDATE request")
         request.uri.query().toList.headOption match {
           case Some(("id", parValue: String)) =>
             val uriGet = Uri.from(scheme = "http", host = coreAddress, port = corePort, path = "/user", queryString = Some("id" + "=" + parValue))
@@ -100,13 +103,13 @@ class WSEndPoints(coreAddress: String, corePort: Int) {
           case _ => Future(HttpResponse(StatusCodes.NotFound))
         }
       case request@HttpRequest(HttpMethods.DELETE, Uri.Path("/user"), _, _, _) =>
+        log.info(s"DELETE request")
         request.uri.query().toList.headOption match {
           case Some(("id", parValue: String)) =>
             val uriDelete = Uri.from(scheme = "http", host = coreAddress, port = corePort, path = "/user", queryString = Some("id" + "=" + parValue))
             Http().singleRequest(HttpRequest(method = DELETE, uri = uriDelete)).map(resp => resp)
           case _ => Future(HttpResponse(StatusCodes.NotFound))
         }
-      //routeUpdate(request.uri.query().toList.headOption, Unmarshal(request.entity).to[String])
       case _@HttpRequest(_, Uri.Path("/favicon.ico"), _, _, _) =>
         //todo: fix it and take from resource folder
         val icoFile = new File("F:\\PROJECTS\\web_serv_api_core\\api\\src\\main\\resources\\favicon.png")
@@ -116,6 +119,7 @@ class WSEndPoints(coreAddress: String, corePort: Int) {
           ))
     }
   }
+
 
   val startService: Future[Done] = serviceSource.runForeach {
     conn =>
