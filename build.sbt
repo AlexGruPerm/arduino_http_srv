@@ -1,4 +1,4 @@
-name := "web_serv_api_core"
+name := "ws_arduino_wifi"
 
 ThisBuild / organization := "yakushev"
 ThisBuild / version      := "0.1.0"
@@ -10,22 +10,13 @@ lazy val global = project
   .settings(commonSettings)
   .disablePlugins(AssemblyPlugin)
   .aggregate(
-    core,
-    api
+    ws
   )
 
-lazy val core = (project in file("core"))
+lazy val ws = (project in file("ws"))
   .settings(
-    assembly / assemblyJarName := "core.jar",
-    name := "core",
-    commonSettings,
-    libraryDependencies ++= commonDependencies
-  )
-
-lazy val api = (project in file("api"))
-  .settings(
-    assembly / assemblyJarName := "api.jar",
-    name := "api",
+    assembly / assemblyJarName := "ws.jar",
+    name := "ws",
     commonSettings,
     libraryDependencies ++= commonDependencies
   )
@@ -36,8 +27,6 @@ lazy val dependencies =
   val akkaHttpV  = "10.2.5"
   val circeV     = "0.14.1"
   val logbackV   = "1.2.3"
-  val elastic4sV = "7.13.0"
-  val elastic4sHttpV = "6.7.8"
 
   val logback        = "ch.qos.logback" % "logback-classic" % logbackV
 
@@ -52,18 +41,12 @@ lazy val dependencies =
   val circeParser    = "io.circe" %% "circe-parser" % circeV
   val circeLiteral   = "io.circe" %% "circe-literal" % circeV
 
-  val elastic4sClient = "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % elastic4sV
-  val elastic4sHttp   = "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sHttpV
-
-  val elastic4s = List(elastic4sClient, elastic4sHttp)
   val akka = List(akkaHttp, akkaActor, akkaStream, akkaActorTyped, akkaSlf4j)
   val circe = List(circeCore, circeGeneric, circeParser, circeLiteral)
 
   }
 
 val commonDependencies = {
-  List(dependencies.logback) ++
-  dependencies.elastic4s ++
   dependencies.akka ++
   dependencies.circe
 }
@@ -92,15 +75,8 @@ lazy val commonSettings = Seq(
   )
 )
 
-api / assembly / assemblyMergeStrategy := {
-  case PathList("module-info.class") => MergeStrategy.discard
-  case x if x.endsWith("/module-info.class") => MergeStrategy.discard
-  case PathList("META-INF", xs @ _*)         => MergeStrategy.discard
-  case "reference.conf" => MergeStrategy.concat
-  case _ => MergeStrategy.first
-}
 
-core / assembly / assemblyMergeStrategy := {
+ws / assembly / assemblyMergeStrategy := {
   case PathList("module-info.class") => MergeStrategy.discard
   case x if x.endsWith("/module-info.class") => MergeStrategy.discard
   case PathList("META-INF", xs @ _*)         => MergeStrategy.discard
