@@ -18,7 +18,7 @@ object WSEndPoints {
   val (host,port) = ("192.168.1.2",8081) //ip in local network + FW + Router ports transfer
   implicit val system: ActorSystem = ActorSystem("core")
   import scala.concurrent.duration._
-  implicit val timeout: Timeout = Timeout(120 seconds)
+  implicit val timeout: Timeout = Timeout(60 seconds)
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
   import akka.stream.scaladsl.Source
   private val serviceSource: Source[Http.IncomingConnection, Future[ServerBinding]] = Http(system).newServerAt(host,port)
